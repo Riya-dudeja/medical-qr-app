@@ -79,34 +79,43 @@ router.post(
   "/change-password",
   authMiddleware,
   async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const user = await User.findById(req.user.id);
 
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user signed up with Google
+      if (user.googleId) {
+        return res.status(400).json({ 
+          error: "This account was created with Google. You cannot change your password as you authenticate through Google.",
+          isGoogleUser: true
+        });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      
+      if (!isMatch) {
+        return res.status(400).json({ error: "Current password is incorrect" });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ error: "New password must be at least 6 characters long" });
+      }
+
+      // Hash the password manually to avoid pre-save middleware issues
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update directly in database to bypass pre-save middleware
+      await User.findByIdAndUpdate(user._id, { password: hashedNewPassword });
+      
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Change password error:", error);
+      res.status(500).json({ error: "Failed to change password" });
     }
-
-    // Check if user signed up with Google
-    if (user.googleId) {
-      return res.status(400).json({ 
-        error: "This account was created with Google. You cannot change your password as you authenticate through Google.",
-        isGoogleUser: true
-      });
-    }
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: "Current password is incorrect" });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({ error: "New password must be at least 6 characters long" });
-    }
-
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
-
-    res.json({ message: "Password changed successfully" });
   }
 );
 
@@ -214,7 +223,7 @@ router.post("/reset-password/:token", async (req, res) => {
     }
 
     // Only update password and clear reset tokens - NEVER touch googleId
-    user.password = await bcrypt.hash(newPassword, 10);
+    user.password = newPassword; // Let the pre-save middleware handle hashing
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();

@@ -22,10 +22,9 @@ const registerUser = async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ message: "Email already registered" });
         }
-        const salt = await bcrypt.genSalt(12);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUser = new User({ name, email, phone, password: hashedPassword });
+        
+        // Don't hash here - let the pre-save middleware handle it
+        const newUser = new User({ name, email, phone, password });
         await newUser.save();
 
         const token = generateToken(newUser);
@@ -51,6 +50,7 @@ const loginUser = async (req, res) => {
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
+        
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
@@ -62,6 +62,7 @@ const loginUser = async (req, res) => {
             user: { id: user._id, name: user.name, email: user.email, phone: user.phone }
         });
     } catch (err) {
+        console.error("Login error:", err);
         res.status(500).json({ message: "Internal Server Error", error: err.message });
     }
 };

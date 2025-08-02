@@ -1,12 +1,11 @@
 import { useState, useContext, useEffect } from "react";
-import AuthLayout from "../components/AuthLayout";
 import Input from "../components/Input";
 import Button from "../components/Button";
 import Label from "../components/Label";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
-import { Eye, EyeOff, Loader, CheckSquare, Square, LogIn } from "lucide-react";
+import { Eye, EyeOff, Loader, CheckSquare, Square, LogIn, Heart } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useGoogleOneTapLogin, GoogleLogin } from '@react-oauth/google';
 import api from '../services/api.js';
@@ -96,7 +95,9 @@ const Login = () => {
         setLoading(true);
 
         try {
+            console.log("Attempting login with email:", email);
             const res = await api.post("/api/auth/login", { email, password });
+            console.log("Login response:", res.data);
             if (!res.data.token) throw new Error("No token received");
 
             localStorage.setItem("token", res.data.token);
@@ -113,6 +114,7 @@ const Login = () => {
             toast.success("Successfully logged in!");
             navigate("/dashboard", { replace: true });
         } catch (error) {
+            console.error("Login error details:", error.response?.data || error.message);
             const message = error.response?.data?.message || "Invalid credentials. Please try again.";
             setError(message);
             toast.error(message);
@@ -123,11 +125,25 @@ const Login = () => {
     };
 
     return (
-        <AuthLayout title="Welcome Back!" subtitle="Sign in to MediQR">
-            <form className="space-y-5" onSubmit={handleLogin}>
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="w-full max-w-md">
+                <div className=" bg-white/80 backdrop-blur-lg rounded-3xl shadow-lg border border-blue-100/50 p-8">
+                    {/* MediQR Branding Header */}
+                    <div className="text-center mb-5">
+                        <div className="flex justify-center items-center space-x-2 mb-4">
+                            <div className="bg-blue-600 p-2 rounded-full">
+                                <Heart className="w-6 h-6 text-white" />
+                            </div>
+                            <h1 className="text-xl font-bold text-blue-600">MediQR</h1>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back!</h2>
+                        <p className="text-gray-600">Sign in to your MediQR account</p>
+                    </div>
+
+            <form className="space-y-3.5" onSubmit={handleLogin}>
                 {/* Email Input */}
                 <div>
-                    <Label htmlFor="email" className="text-md font-medium text-gray-700 mb-1.5 block">Email</Label>
+                    <Label htmlFor="email" className="text-md font-medium text-gray-700 mb-2 block">Email</Label>
                     <Input 
                         id="email" 
                         type="email" 
@@ -135,13 +151,13 @@ const Login = () => {
                         required 
                         value={email} 
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full px-3 py-2.5 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors rounded-2xl"
+                        className="w-full px-3 py-3 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     />
                 </div>
 
                 {/* Password Input with Visibility Toggle */}
                 <div>
-                    <Label htmlFor="password" className="text-md font-medium text-gray-700 mb-1.5 block">Password</Label>
+                    <Label htmlFor="password" className="text-md font-medium text-gray-700 mb-2 block">Password</Label>
                     <div className="relative">
                         <Input
                             id="password"
@@ -150,7 +166,7 @@ const Login = () => {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-3 py-2.5 pr-10 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            className="w-full px-3 py-3 pr-10 border focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                         />
                         <button
                             type="button"
@@ -163,7 +179,7 @@ const Login = () => {
                 </div>
 
                 {/* Remember Me & Forgot Password */}
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between ">
                     <div className="flex items-center space-x-2">
                         <button type="button" onClick={() => setRememberMe(!rememberMe)} className="text-blue-600">
                             {rememberMe ? <CheckSquare size={16} /> : <Square size={16} />}
@@ -171,7 +187,7 @@ const Login = () => {
                         <span className="text-gray-600">Remember me</span>
                     </div>
                     <span
-                        className="text-blue-600 hover:text-blue-700 cursor-pointer"
+                        className="text-blue-600 hover:text-blue-700 cursor-pointer font-semibold"
                         onClick={() => navigate("/forgot-password")}
                     >
                         Forgot password?
@@ -180,7 +196,7 @@ const Login = () => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4">
                         <p className="text-red-600 text-sm">{error}</p>
                     </div>
                 )}
@@ -189,7 +205,7 @@ const Login = () => {
                 <Button 
                     type="submit" 
                     disabled={loading}
-                    className=" bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-2xl transition-colors flex items-center justify-center"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center mt-2"
                 >
                     {loading ? (
                         <>
@@ -209,37 +225,41 @@ const Login = () => {
             <div className="my-4">
                 <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border border-gray-200"></div>
+                        <div className="w-full"></div>
                     </div>
-                    <div className="relative flex justify-center text-md">
-                        <span className=" text-gray-500 font-medium">Or continue with</span>
+                    <div className="relative flex justify-center">
+                        <span className=" px-2 text-gray-500 font-medium">Or continue with</span>
                     </div>
                 </div>
             </div>
 
+
+
             {/* Google Login */}
-            <div className="space-y-3 mt-2 flex justify-center w-full rounded-2xl">
-                    <GoogleLogin
-                        onSuccess={handleGoogleSuccess}
-                        onError={handleGoogleError}
-                        theme="outline"
-                        size="large"
-                        text="signin_with"
-                        width="100%"
-                        useOneTap={false}
-                        context="signin"
-                        auto_select={false}
-                    />
+            <div className="flex justify-center w-full rounded-3xl">
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    theme="outline"
+                    size="large"
+                    text="signin_with"
+                    width="100%"
+                    useOneTap={false}
+                    context="signin"
+                    auto_select={false}
+                />
             </div>
-            <p className="text-center font-medium mt-3 text-gray-500">
-                    One Tap may appear automatically for returning users
-             </p>
+            <p className="text-center font-medium mt-3 text-gray-500 text-sm">
+                One Tap may appear automatically for returning users
+            </p>
 
             {/* Register Link */}
-            <p className="text-center mt-4 text-gray-600">
-                Don't have an account? <span className="text-blue-700 font-semibold cursor-pointer" onClick={() => navigate("/register")}>Register now</span>
+            <p className="text-center mt-6 text-gray-600">
+                Don't have an account? <span className="text-blue-600 hover:text-blue-700 font-semibold cursor-pointer" onClick={() => navigate("/register")}>Register now</span>
             </p>
-        </AuthLayout>
+                </div>
+            </div>
+        </div>
     );
 };
 
