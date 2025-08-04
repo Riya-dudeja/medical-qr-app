@@ -3,6 +3,7 @@ import express, { json } from 'express';
 import { connect } from 'mongoose';
 import cors from 'cors';
 import medicalRoutes from './routes/medicalRoutes.js';
+import medsafeRoutes from './routes/medsafeRoutes.js';
 import authRoutes from "./routes/authRoutes.js";
 import sosRoutes from "./routes/sosRoutes.js";
 import insuranceRoutes from './routes/insuranceRoutes.js'
@@ -35,6 +36,7 @@ app.use('/api/', sosRoutes);
 app.use('/api/insurance', insuranceRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/medsafe', medsafeRoutes);
 app.use('/uploads', (req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   next();

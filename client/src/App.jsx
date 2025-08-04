@@ -5,6 +5,7 @@ import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Profile from './pages/ProfilePage.jsx';
 import DashboardLayout from "./components/DashboardLayout.jsx";
+import MedicationSafetyChecker from './pages/MedicationSafetyChecker.jsx';
 import QRCodePage from "./pages/QRCodePage.jsx";
 import InsurancePage from './pages/InsurancePage.jsx';
 import MedicalDetails from './pages/MedicalDetails.jsx';
@@ -46,6 +47,7 @@ function App() {
               <Route path="medical-info" element={<MedicalDetails />} />
               <Route path="insurance" element={<InsurancePage />} />
               <Route path="emergency-settings" element={<EmergencySettings />} />
+              <Route path="medication-safety" element={<MedicationSafetyChecker />} />
             </Route>
           </Routes>
         </Router>
