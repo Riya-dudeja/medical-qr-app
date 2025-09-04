@@ -54,198 +54,82 @@ const MedicalCard = ({ data : propData }) => {
 
   // Main content rendering
   return (
-    <Card sx={{ 
-      maxWidth: 450, 
-      mx: "auto", 
-      mt: 4, 
-      boxShadow: "0 2px 10px rgba(0,0,0,0.1)", 
-      borderRadius: 12,
-    }}>
-      <CardContent sx={{ p: 0 }}>
-        {/* Header */}
-        <div style={{
-          backgroundColor: "#dc2626",
-          color: "white",
-          padding: "12px 16px",
-          textAlign: "center",
-          borderRadius: "16px 16px 0 0"
-        }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
-            Emergency Medical Info
-          </Typography>
+    <div className="max-w-md w-full mx-auto bg-white rounded-2xl shadow-2xl border-2 border-blue-100 p-6 flex flex-col items-center my-8">
+      {/* Header */}
+      <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4 shadow">
+        <span className="text-3xl">🚑</span>
+      </div>
+      <h2 className="text-2xl font-extrabold text-blue-800 mb-2 text-center tracking-tight">Emergency Medical Info</h2>
+      <div className="w-full mt-2 space-y-3 text-gray-700">
+        {/* Patient Info */}
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Name:</span>
+          <span className="ml-auto text-gray-800">{data?.userId?.name || data?.name || "N/A"}</span>
         </div>
-
-        <div style={{ padding: "20px" }}>
-          {/* Patient Info */}
-          <div style={{ marginBottom: "16px" }}>
-            <Typography variant="subtitle1" sx={{ 
-              fontWeight: 600, 
-              color: "#374151", 
-              marginBottom: "8px",
-              fontSize: "0.95rem"
-            }}>
-              Patient Information
-            </Typography>
-            
-            <Typography variant="body1" sx={{ marginBottom: "4px" }}>
-              <strong>Name:</strong> {data?.userId?.name || data?.name || "N/A"}
-            </Typography>
-            
-            <Typography variant="body1" sx={{ marginBottom: "8px" }}>
-              <strong>Blood Type:</strong> <span style={{ color: "#dc2626", fontWeight: 600 }}>
-                {data?.bloodGroup || "Unknown"}
-              </span>
-            </Typography>
-          </div>
-
-          <Divider sx={{ my: 2 }} />
-
-          {/* Medical Info */}
-          <div style={{ marginBottom: "16px" }}>
-            <Typography variant="subtitle1" sx={{ 
-              fontWeight: 600, 
-              color: "#dc2626", 
-              marginBottom: "8px",
-              fontSize: "0.95rem"
-            }}>
-              Critical Medical Information
-            </Typography>
-            
-            <Typography variant="body2" sx={{ marginBottom: "4px" }}>
-              <strong>Drug Allergies:</strong> {
-                flattenArray(data?.drugAllergies || data?.allergies).length 
-                  ? flattenArray(data?.drugAllergies || data?.allergies).slice(0, 3).join(", ")
-                  : "None known"
-              }
-            </Typography>
-
-            <Typography variant="body2" sx={{ marginBottom: "4px" }}>
-              <strong>Medical Conditions:</strong> {
-                flattenArray(data?.conditions).length 
-                  ? flattenArray(data.conditions).slice(0, 3).join(", ")
-                  : "None known"
-              }
-            </Typography>
-
-            <Typography variant="body2" sx={{ marginBottom: "4px" }}>
-              <strong>Current Medications:</strong> {
-                flattenArray(data?.medications).length 
-                  ? flattenArray(data.medications).slice(0, 2).join(", ") + (flattenArray(data.medications).length > 2 ? "..." : "")
-                  : "None listed"
-              }
-            </Typography>
-
-            {data?.medicalDevices && (
-              <Typography variant="body2" sx={{ marginBottom: "4px" }}>
-                <strong>Medical Devices:</strong> {data.medicalDevices}
-              </Typography>
-            )}
-          </div>
-
-          <Divider sx={{ my: 2 }} />
-
-          {/* Emergency Contacts */}
-          <div style={{ marginBottom: "12px" }}>
-            <Typography variant="subtitle1" sx={{ 
-              fontWeight: 600, 
-              color: "#374151", 
-              marginBottom: "8px",
-              fontSize: "0.95rem"
-            }}>
-              Emergency Contacts
-            </Typography>
-
-            {(data?.emergencyContact || []).slice(0, 2).map((contact, index) => (
-              <div key={index} style={{ 
-                marginBottom: 8, 
-                padding: "10px",
-                backgroundColor: index === 0 ? "#f8fafc" : "#ffffff", 
-                border: "1px solid #e5e7eb",
-                borderRadius: "6px"
-              }}>
-                <Typography variant="body2" sx={{ 
-                  fontWeight: 600, 
-                  color: index === 0 ? "#1e40af" : "#374151",
-                  fontSize: "0.8rem",
-                  textTransform: "uppercase",
-                  marginBottom: "2px"
-                }}>
-                  {index === 0 ? "Primary" : "Secondary"}
-                </Typography>
-                
-                <Typography variant="body2" sx={{ fontWeight: 500, marginBottom: "2px" }}>
-                  {contact.name || "N/A"}
-                </Typography>
-                
-                <Typography variant="body2" sx={{ fontSize: "0.85rem", color: "#6b7280" }}>
-                  {contact.relation || "N/A"} • {contact.phone || "N/A"}
-                </Typography>
-              </div>
-            ))}
-
-            {(data?.emergencyContact || []).length === 0 && (
-              <Typography variant="body2" sx={{ 
-                color: "#6b7280", 
-                fontStyle: "italic", 
-                textAlign: "center", 
-                py: 1
-              }}>
-                No emergency contacts
-              </Typography>
-            )}
-
-            {/* Primary Doctor */}
-            {data?.primaryDoctor && (
-              <div style={{ 
-                marginTop: 8,
-                padding: "8px",
-                backgroundColor: "#f0f9ff", 
-                border: "1px solid #bfdbfe",
-                borderRadius: "6px"
-              }}>
-                <Typography variant="body2" sx={{ 
-                  fontWeight: 600, 
-                  color: "#1e40af",
-                  fontSize: "0.8rem",
-                  textTransform: "uppercase",
-                  marginBottom: "2px"
-                }}>
-                  Primary Doctor
-                </Typography>
-                
-                <Typography variant="body2" sx={{ fontSize: "0.85rem", color: "#1e40af" }}>
-                  {data.primaryDoctor.name || "N/A"} • {data.primaryDoctor.phone || "N/A"}
-                </Typography>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div style={{
-            backgroundColor: "#fef3c7",
-            border: "1px solid #f59e0b",
-            borderRadius: "6px",
-            padding: "10px",
-            textAlign: "center"
-          }}>
-            <Typography variant="body2" sx={{ 
-              fontWeight: 500,
-              color: "#92400e",
-              fontSize: "0.8rem"
-            }}>
-              FOR EMERGENCY USE ONLY
-            </Typography>
-            <Typography variant="body2" sx={{ 
-              color: "#92400e",
-              fontSize: "0.7rem",
-              mt: 0.5
-            }}>
-              Call 911 for life-threatening emergencies • Last updated: {new Date().toLocaleDateString()}
-            </Typography>
-          </div>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Blood Type:</span>
+          <span className="ml-auto text-blue-700 font-bold">{data?.bloodGroup || "Unknown"}</span>
         </div>
-      </CardContent>
-    </Card>
+        {/* Medical Info */}
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Drug Allergies:</span>
+          <span className="ml-auto text-gray-800">{
+            flattenArray(data?.drugAllergies || data?.allergies).length 
+              ? flattenArray(data?.drugAllergies || data?.allergies).slice(0, 3).join(", ")
+              : "None known"
+          }</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Medical Conditions:</span>
+          <span className="ml-auto text-gray-800">{
+            flattenArray(data?.conditions).length 
+              ? flattenArray(data.conditions).slice(0, 3).join(", ")
+              : "None known"
+          }</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-semibold">Current Medications:</span>
+          <span className="ml-auto text-gray-800">{
+            flattenArray(data?.medications).length 
+              ? flattenArray(data.medications).slice(0, 2).join(", ") + (flattenArray(data.medications).length > 2 ? "..." : "")
+              : "None listed"
+          }</span>
+        </div>
+        {data?.medicalDevices && (
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">Medical Devices:</span>
+            <span className="ml-auto text-gray-800">{data.medicalDevices}</span>
+          </div>
+        )}
+        {/* Emergency Contacts */}
+        <div className="flex flex-col gap-2 mt-4">
+          <span className="font-semibold text-gray-700">Emergency Contacts:</span>
+          {(data?.emergencyContact || []).slice(0, 2).map((contact, index) => (
+            <div key={index} className={`flex flex-col p-3 rounded-lg border ${index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}`}>
+              <span className="text-xs font-bold uppercase text-blue-700 mb-1">{index === 0 ? "Primary" : "Secondary"}</span>
+              <span className="font-semibold">{contact.name || "N/A"}</span>
+              <span className="text-xs text-gray-500">{contact.relation || "N/A"} • {contact.phone || "N/A"}</span>
+            </div>
+          ))}
+          {(data?.emergencyContact || []).length === 0 && (
+            <span className="italic text-gray-400 text-center py-1">No emergency contacts</span>
+          )}
+        </div>
+        {/* Primary Doctor */}
+        {data?.primaryDoctor && (
+          <div className="flex flex-col p-3 rounded-lg border bg-blue-50 border-blue-200 mt-2">
+            <span className="text-xs font-bold uppercase text-blue-700 mb-1">Primary Doctor</span>
+            <span className="font-semibold">{data.primaryDoctor.name || "N/A"}</span>
+            <span className="text-xs text-blue-700">{data.primaryDoctor.phone || "N/A"}</span>
+          </div>
+        )}
+        {/* Footer */}
+        <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-center mt-4">
+          <span className="block font-semibold text-yellow-800 text-xs">FOR EMERGENCY USE ONLY</span>
+          <span className="block text-yellow-800 text-xs mt-1">Call 911 for life-threatening emergencies • Last updated: {new Date().toLocaleDateString()}</span>
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -36,21 +36,36 @@ async function fetchDrugData(drug) {
   ];
   let res = null;
   let usedField = null;
+  const maxRetries = 3;
   for (const { field, value } of searchFields) {
-    try {
-      const url = `https://api.fda.gov/drug/label.json?search=${field}:${value}&limit=1`;
-      res = await axios.get(url);
-      usedField = field;
-      break;
-    } catch (err) {
-      if (err.response && err.response.status === 404) {
-        console.log(`No FDA data for ${drug} (generic: ${generic}) using field ${field}`);
-        continue;
-      } else {
-        console.log(`Error fetching data for ${drug} (generic: ${generic}) using field ${field}:`, err.message);
-        return null;
+    let attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        const url = `https://api.fda.gov/drug/label.json?search=${field}:${value}&limit=1`;
+        res = await axios.get(url);
+        usedField = field;
+        break;
+      } catch (err) {
+        attempt++;
+        if (err.response && err.response.status === 404) {
+          console.log(`No FDA data for ${drug} (generic: ${generic}) using field ${field}`);
+          break;
+        } else if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || err.code === 'ENOTFOUND') {
+          console.log(`Network error (${err.code}) for ${drug} (generic: ${generic}) using field ${field}, attempt ${attempt}`);
+          if (attempt < maxRetries) {
+            await new Promise(res => setTimeout(res, 1000 * attempt)); // Exponential backoff
+            continue;
+          } else {
+            console.log(`Failed to fetch data for ${drug} after ${maxRetries} attempts.`);
+            break;
+          }
+        } else {
+          console.log(`Error fetching data for ${drug} (generic: ${generic}) using field ${field}:`, err.message);
+          break;
+        }
       }
     }
+    if (res) break;
   }
   if (!res) return null;
   console.log(`API response for ${drug} (generic: ${generic}, field: ${usedField}):`, JSON.stringify(res.data, null, 2));
