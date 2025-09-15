@@ -19,7 +19,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import EditProfile from './pages/EditProfile.jsx';
 import ResetPassword from './pages/ResetPass.jsx';
 import ForgotPassword from './pages/ForgotPass.jsx';
-import EmergencySettings from './pages/emergency.jsx';
+import EmergencySettings from './pages/Emergency.jsx';
 
 const theme = createTheme({
   typography: {
