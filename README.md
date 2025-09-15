@@ -80,13 +80,9 @@ Your data is protected with:
 
 ### 📸 **Screenshots**
 
-<div align="center">
-
-| Dashboard | QR Code Generation | Emergency SOS |
+| Dashboard | QR Code Generation from Medical Info | Medical card generated from QR |
 |-----------|-------------------|---------------|
 | ![Dashboard](./client/public/dash.png) | ![QR Code](./client/public/qr.png) | ![Medical Info Card](./client/public/card.png)|
-
-</div>
 
 ---
 
