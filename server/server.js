@@ -27,7 +27,16 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // In production, you can be more restrictive
+    // Allow your specific Vercel domain
+    if (origin === 'https://medical-qr-app.vercel.app') {
+      return callback(null, true);
+    }
+    
+    // Allow other Vercel domains (for preview deployments)
+    if (origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    
     return callback(null, true);
   },
   credentials: true,
@@ -53,15 +62,7 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static('uploads'));
 
-// Serve static files from React app (for production deployment)
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-  
-  // Handle React routing - return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist', 'index.html'));
-  });
-}
+// API-only mode - no static file serving needed (frontend is on Vercel)
 
 connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
