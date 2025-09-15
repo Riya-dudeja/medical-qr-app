@@ -2,18 +2,20 @@ import axios from 'axios';
 
 // Get the base URL dynamically based on environment
 const getBaseUrl = () => {
-  // Use environment variable in production
-  if (import.meta.env.PROD && import.meta.env.VITE_API_URL) {
+  // Check for environment variable first (works in both dev and prod)
+  if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // In development, determine the correct host for API calls
+  // Fallback for development without env var
   const host = window.location.hostname;
   
-  // For network testing, you might want to force a specific IP
-  // Uncomment and modify this line if needed:
-  // return 'http://192.168.1.100:5000'; // Replace with your PC's IP
+  // If we're on Vercel or production domain, use the production backend
+  if (host.includes('vercel.app') || host.includes('medical-qr-app')) {
+    return 'https://medical-qr-app.onrender.com';
+  }
   
+  // Local development fallback
   return `http://${host}:5000`;
 };
 
