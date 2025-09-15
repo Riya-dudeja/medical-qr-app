@@ -50,6 +50,16 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'MediQR API is running' });
 });
 
+// Root endpoint for API info
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'MediQR API Server', 
+    status: 'Running',
+    frontend: 'https://medical-qr-app.vercel.app',
+    health: '/api/health'
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/medical', medicalRoutes);
 app.use('/api/', sosRoutes);
