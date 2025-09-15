@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![MediQR Logo](./client/public/image.png)
-
 **Your Digital Life Saver - Instant Medical Information Access in Emergencies**
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_App-blue?style=for-the-badge)](https://medical-qr-app.vercel.app/)
@@ -86,7 +84,7 @@ Your data is protected with:
 
 | Dashboard | QR Code Generation | Emergency SOS |
 |-----------|-------------------|---------------|
-| ![Dashboard](./client/public/image.png) | ![QR Code](./client/public/image.png) | ![SOS](./client/public/image.png)|
+| ![Dashboard](./client/public/dash.png) | ![QR Code](./client/public/qr.png) | ![Medical Info Card](./client/public/card.png)|
 
 </div>
 
