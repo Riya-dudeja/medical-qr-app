@@ -19,6 +19,8 @@ const app = express();
 
 app.use(cors({
   origin: function(origin, callback) {
+    console.log('🌍 CORS Origin:', origin); // Debug log
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
@@ -37,17 +39,47 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Allow in production mode
     return callback(null, true);
   },
   credentials: true,
-  methods: 'GET,POST,PUT,DELETE'
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
 
 app.use(json());
 
+// Manual CORS headers as fallback
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && (origin.includes('vercel.app') || origin.includes('localhost'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', true);
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'MediQR API is running' });
+});
+
+// CORS test endpoint
+app.get('/api/test-cors', (req, res) => {
+  res.status(200).json({ 
+    message: 'CORS is working!', 
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Root endpoint for API info

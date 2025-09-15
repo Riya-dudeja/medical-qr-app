@@ -109,7 +109,7 @@ const getMedicalQR = async (req, res) => {
 
         const medicalInfo = await MedicalData.findOne(
             { userId: req.user.id }
-        )
+        ).populate("userId", "name");
 
         if (!medicalInfo) {
             return res.status(404).json({ error: "Medical info not found" });
@@ -117,19 +117,14 @@ const getMedicalQR = async (req, res) => {
 
         console.log("🔍 Medical Info from DB:", medicalInfo);
 
-        const qrData = JSON.stringify({
-            name: medicalInfo.userId.name || "Unknown",
-            bloodGroup: medicalInfo.bloodGroup || "N/A",
-            allergies: Array.isArray(medicalInfo.allergies) ? medicalInfo.allergies : [],
-            conditions: Array.isArray(medicalInfo.conditions) ? medicalInfo.conditions : [],
-            medications: Array.isArray(medicalInfo.medications) ? medicalInfo.medications : [],
-            emergencyContact: medicalInfo.emergencyContact || { name: "N/A", phone: "N/A" }
+        // Generate QR code with proper URL
+        const qrUrl = `https://medical-qr-app.vercel.app/qr-result/${req.user.id}`;
+        const qrCodeUrl = await QRCode.toDataURL(qrUrl);
+
+        res.status(200).json({ 
+            qrCodeUrl,
+            qrUrl: qrUrl
         });
-
-        console.log("📌 QR Code Data:", qrData);
-
-        const qrCodeUrl = await generateQRCode(medicalInfo.userId);
-        res.status(200).json({ qrCodeUrl });
 
     } catch (error) {
         console.error("Error fetching QR data:", error);

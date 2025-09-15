@@ -86,7 +86,7 @@ Your data is protected with:
 
 | Dashboard | QR Code Generation | Emergency SOS |
 |-----------|-------------------|---------------|
-| ![Dashboard](https://via.placeholder.com/300x200?text=Dashboard+View) | ![QR Code](https://via.placeholder.com/300x200?text=QR+Code+Generation) | ![SOS](https://via.placeholder.com/300x200?text=Emergency+SOS) |
+| ![Dashboard](./client/public/image.png) | ![QR Code](./client/public/image.png) | ![SOS](./client/public/image.png)|
 
 </div>
 
