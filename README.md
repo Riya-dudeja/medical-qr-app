@@ -78,12 +78,6 @@ Your data is protected with:
 **Frontend:** [https://medical-qr-app.vercel.app/](https://medical-qr-app.vercel.app/)  
 **API Backend:** [https://medical-qr-app.onrender.com/](https://medical-qr-app.onrender.com/)
 
-### 📸 **Screenshots**
-
-| Dashboard | QR Code Generation from Medical Info | Medical card generated from QR |
-|-----------|-------------------|---------------|
-| ![Dashboard](./client/public/dash.png) | ![QR Code](./client/public/qr.png) | ![Medical Info Card](./client/public/card.png)|
-
 ---
 
 ## 🛠️ **Tech Stack**
@@ -197,16 +191,6 @@ medical-qr-app/
 
 ## 🚀 **Deployment Architecture**
 
-```mermaid
-graph TB
-    A[User] --> B[Vercel Frontend]
-    B --> C[Render Backend API]
-    C --> D[MongoDB Atlas]
-    
-    E[Emergency Contact] --> F[QR Code Scanner]
-    F --> B
-```
-
 - **Frontend**: Deployed on Vercel for global CDN and instant loading
 - **Backend**: Hosted on Render for scalable API performance  
 - **Database**: MongoDB Atlas for secure, cloud-based data storage
@@ -238,7 +222,7 @@ We welcome contributions! Please see our [Contributing Guidelines](./CONTRIBUTIN
 
 ## 📄 **License**
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+This project is licensed under the MIT License
 
 ---
 
@@ -269,10 +253,6 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 <div align="center">
 
 **⭐ Star this repository if MediQR helped you or could help others! ⭐**
-
-![Stars](https://img.shields.io/github/stars/Riya-dudeja/medical-qr-app?style=social)
-![Forks](https://img.shields.io/github/forks/Riya-dudeja/medical-qr-app?style=social)
-![Issues](https://img.shields.io/github/issues/Riya-dudeja/medical-qr-app)
 
 *Made with ❤️ for emergency preparedness and medical safety*
 
