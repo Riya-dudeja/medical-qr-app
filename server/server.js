@@ -4,6 +4,7 @@ import { connect } from 'mongoose';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import logger from './utils/logger.js';
 import medicalRoutes from './routes/medicalRoutes.js';
 import medsafeRoutes from './routes/medsafeRoutes.js';
 import authRoutes from "./routes/authRoutes.js";
@@ -19,8 +20,6 @@ const app = express();
 
 app.use(cors({
   origin: function(origin, callback) {
-    console.log('🌍 CORS Origin:', origin); // Debug log
-    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     

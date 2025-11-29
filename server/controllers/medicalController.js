@@ -37,7 +37,6 @@ const updateMedicalInfo = async (req, res) => {
         const { bloodGroup, allergies, selectedAllergies, conditions, medications, emergencyContact } = req.body;
 
         if (!req.user?.id) {
-            console.log("🔴 User ID missing in request!");
             return res.status(400).json({ error: "User ID missing" });
         }
 
@@ -95,7 +94,6 @@ export const generateQRCode = async (userId) => {
         const frontendUrl = process.env.FRONTEND_URL || 'https://medical-qr-app.vercel.app';
         const qrUrl = `${frontendUrl}/qr-result/${userId}`;
         const qrCodeUrl = await QRCode.toDataURL(qrUrl);
-        console.log("🔗 Generated QR URL:", qrUrl);
         return qrCodeUrl;
     } catch (err) {
         console.error("🔴 QR Code generation error:", err);

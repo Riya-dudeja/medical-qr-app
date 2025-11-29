@@ -17,13 +17,7 @@ router.post('/check-medications', authenticateUser, async (req, res) => {
     const medList = Array.isArray(medications) && typeof medications[0] === 'object' ? medications : medications.map(name => ({ name }));
     // Normalize medication names to lowercase for lookup
     const medNames = medList.map(m => m.name.toLowerCase());
-    console.log('Medications from MedicalData:', medications);
-    console.log('medList:', medList);
-    console.log('medNames:', medNames);
     const drugInfos = await DrugInfo.find({ name: { $in: medNames } });
-    console.log('DrugInfos found:', drugInfos.map(d => d.name));
-    console.log('Allergies:', allergies);
-    console.log('Conditions:', conditions);
 
     const allMeds = [];
     for (const med of medList) {

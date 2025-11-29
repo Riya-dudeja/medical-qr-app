@@ -4,9 +4,6 @@ import { sendSOSAlert } from "../controllers/sosController.js";
 const router = Router();
 
 
-router.post("/sos", (req, res, next) => {
-  console.log("🚀 Incoming SOS Request:", req.body);
-  next();
-}, sendSOSAlert);
+router.post("/sos", sendSOSAlert);
 
 export default router;
