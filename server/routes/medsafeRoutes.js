@@ -11,7 +11,6 @@ router.post('/check-medications', authenticateUser, async (req, res) => {
     const userMedical = await MedicalData.findOne({ userId });
     if (!userMedical) return res.status(404).json({ error: 'Medical profile not found' });
 
-    // MedSafe expects medications: [{ name, dosage }], allergies: [string], conditions: [string]
     const { medications = [], allergies = [], conditions = [] } = userMedical;
     // If medications are stored as strings, convert to objects
     const medList = Array.isArray(medications) && typeof medications[0] === 'object' ? medications : medications.map(name => ({ name }));
