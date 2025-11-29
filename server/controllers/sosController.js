@@ -199,213 +199,144 @@ const transporter = nodemailer.createTransport({
 
 export const sendSOSAlert = async (req, res) => {
   try {
-      const { userId, latitude, longitude } = req.body;
+    const { userId, latitude, longitude } = req.body;
 
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
-      }
+    if (!userId) {
+      return res.status(400).json({ error: "Missing userId in request body", details: req.body });
+    }
 
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(400).json({ message: "User Not found!" });
-      }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ error: "User not found in database", userId });
+    }
 
-      const medicalInfo = await MedicalData.findOne({ userId });
-      const insuranceInfo = await insuranceSchema.findOne({ userId });
+    const medicalInfo = await MedicalData.findOne({ userId });
+    if (!medicalInfo) {
+      return res.status(400).json({ error: "No medical profile found for user", userId });
+    }
 
-      if (!medicalInfo || !medicalInfo.emergencyContact?.length) {
-        return res.status(400).json({ message: "No emergency contacts found!" });
-      }
+    if (!medicalInfo.emergencyContact || !Array.isArray(medicalInfo.emergencyContact) || medicalInfo.emergencyContact.length === 0) {
+      return res.status(400).json({ error: "No emergency contacts found for user", userId });
+    }
 
-      const sortedContacts = medicalInfo.emergencyContact.sort((a, b) => a.priority - b.priority);
+    // Validate emergency contacts for required fields
+    const missingEmailContacts = medicalInfo.emergencyContact.filter(c => !c.email);
+    if (missingEmailContacts.length === medicalInfo.emergencyContact.length) {
+      return res.status(400).json({ error: "No emergency contacts have email addresses", contacts: medicalInfo.emergencyContact });
+    }
 
-      // Get the best emergency contact based on location + priority
-      const bestContact = await getBestEmergencyContact(medicalInfo.emergencyContact, latitude, longitude);
+    // Validate latitude/longitude
+    if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+      return res.status(400).json({ error: "Missing or invalid latitude/longitude", latitude, longitude });
+    }
 
-      console.log("📞 FINAL SELECTION:", {
-        name: bestContact.name,
-        contactCity: bestContact.city,
-        userCity: bestContact.userCity,
-        priority: bestContact.priority,
-        distance: bestContact.distance,
-        isExactMatch: bestContact.isExactMatch,
-        score: bestContact.score,
-        reason: latitude && longitude ? 
-          (bestContact.isExactMatch ? 'Same city + High priority' : 'Location + Priority optimized') : 
-          'Priority based only'
-      });
-      console.log("📤 Sending Emergency Email Alerts...");
+    const insuranceInfo = await insuranceSchema.findOne({ userId });
 
-      // Send email alerts
-      let emailsSent = 0;
-      
-      // Send to insurance provider if email exists
-      if (insuranceInfo && insuranceInfo.email) {
-        await transporter.sendMail({
-          to: insuranceInfo.email,
-          subject: `Emergency Notification – Policyholder ${user.name}`,
-          html: `
-            <div style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #ccc;">
-              <div style="background: #1f2937; color: white; padding: 20px; text-align: center;">
-                <h2 style="margin: 0;">MediQR Insurance Alert</h2>
-                <p style="margin: 4px 0 0 0; font-size: 13px;">Automated Notification System</p>
-              </div>
+    // Get the best emergency contact based on location + priority
+    const bestContact = await getBestEmergencyContact(medicalInfo.emergencyContact, latitude, longitude);
 
-              <div style="padding: 25px;">
-                <p style="margin: 0 0 15px 0; color: #111827; font-size: 14px;">
-                  This is to inform you that the policyholder <strong>${user.name}</strong> has triggered a real-time emergency alert through the MediQR platform.
-                </p>
-
-                <table style="width: 100%; font-size: 13px;">
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Name:</td><td>${user.name}</td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Policy Number:</td><td>${insuranceInfo.policyNumber || 'Not available'}</td></tr>
-                  <tr><td style="padding: 6px 0; font-weight: bold;">Time of Alert:</td><td>${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td></tr>
-                </table>
-
-                ${latitude && longitude ? `
-                  <p style="margin-top: 15px; font-size: 13px;">
-                    <strong>Location:</strong> <a href="https://maps.google.com/?q=${latitude},${longitude}" style="color: #2563eb;">View Map</a>
-                  </p>` : ''}
-
-                <p style="margin-top: 20px; font-size: 13px; color: #374151;">
-                  Please prepare to initiate emergency response procedures or pre-authorization if required. This is an automated notification and may be followed up by the hospital or family representatives.
-                </p>
-              </div>
-
-              <div style="background: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
-                <p style="margin: 0;">Generated by MediQR Emergency Alert System</p>
-                <p style="margin: 5px 0 0 0;">For authorized insurance use only</p>
-              </div>
+    // ...existing code for sending emails and response...
+    let emailsSent = 0;
+    if (insuranceInfo && insuranceInfo.email) {
+      await transporter.sendMail({
+        to: insuranceInfo.email,
+        subject: `Emergency Notification – Policyholder ${user.name}`,
+        html: `
+          <div style="font-family: 'Segoe UI', Tahoma, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #ccc;">
+            <div style="background: #1f2937; color: white; padding: 20px; text-align: center;">
+              <h2 style="margin: 0;">MediQR Insurance Alert</h2>
+              <p style="margin: 4px 0 0 0; font-size: 13px;">Automated Notification System</p>
             </div>
-          `,
-          text: `INSURANCE NOTIFICATION
-
-      Policyholder ${user.name} has triggered a real-time emergency alert.
-
-      Name: ${user.name}
-      Policy Number: ${insuranceInfo.policyNumber || 'Not available'}
-      Time of Alert: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-      ${latitude && longitude ? `Location: https://maps.google.com/?q=${latitude},${longitude}` : ''}
-
-      Please initiate emergency claim handling or pre-authorization procedures as applicable.
-
-      — MediQR Alert System`
-        });
-
-        emailsSent++;
-        console.log("✅ Email sent to insurance provider:", insuranceInfo.email);
-      }
-
-
-      // Send to the selected best emergency contact
-      if (bestContact.email) {
-  // Send to Emergency Contact
-  await transporter.sendMail({
-    to: bestContact.email,
-    subject: `Emergency Alert – ${user.name} requires assistance`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ccc; background-color: #ffffff;">
-        <div style="background-color: #003366; color: white; padding: 16px;">
-          <h2 style="margin: 0; font-size: 18px;">Emergency Notification</h2>
-        </div>
-
-        <div style="padding: 20px; font-size: 14px; color: #111827;">
-          <p style="margin-bottom: 15px;">
-            You are receiving this message because <strong>${user.name}</strong> has triggered a medical emergency alert and listed you as their primary emergency contact.
-          </p>
-
-          <h4 style="margin: 20px 0 5px 0; font-size: 15px;">User Information</h4>
-          <table style="width: 100%; font-size: 14px;">
-            <tr><td style="padding: 6px 0; font-weight: bold;">Name:</td><td>${user.name}</td></tr>
-            <tr><td style="padding: 6px 0; font-weight: bold;">Phone:</td><td>${user.phone || 'Not available'}</td></tr>
-          </table>
-
-          ${latitude && longitude ? `
-            <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Last Known Location</h4>
-            <p style="margin-bottom: 8px;">
-              <a href="https://maps.google.com/?q=${latitude},${longitude}" style="color: #1d4ed8;">Click to open in Google Maps</a>
-            </p>
-            <p style="font-size: 13px; color: #4b5563;">Coordinates: ${latitude}, ${longitude}</p>
-          ` : `
-            <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Location</h4>
-            <p style="color: #6b7280;">Location not available</p>
-          `}
-
-          <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Contact Relevance</h4>
-          <table style="width: 100%; font-size: 14px;">
-            <tr><td style="padding: 6px 0; font-weight: bold;">Priority:</td><td>${bestContact.priority}</td></tr>
-            <tr><td style="padding: 6px 0; font-weight: bold;">Your Location:</td><td>${bestContact.city || 'Unknown'}</td></tr>
-            <tr><td style="padding: 6px 0; font-weight: bold;">Distance from user:</td><td>${bestContact.distance !== 'Unknown' ? `${bestContact.distance} km` : 'Unknown'}</td></tr>
-            <tr><td style="padding: 6px 0; font-weight: bold;">Selection Basis:</td><td>${latitude && longitude ? 'Proximity + Priority' : 'Priority Only'}</td></tr>
-          </table>
-
-          <h4 style="margin: 20px 0 5px 0; font-size: 15px;">What You Should Do</h4>
-          <ol style="padding-left: 18px; font-size: 14px; color: #1f2937;">
-            <li>Call ${user.name} immediately using their registered number.</li>
-            <li>If unreachable, proceed to the shared location if available.</li>
-            <li>Dial 108 (Ambulance) or 112 (Emergency) if urgent care is needed.</li>
-            <li>Notify other close family members if possible.</li>
-            <li>Stay with the user until medical assistance arrives.</li>
-          </ol>
-        </div>
-
-        <div style="background-color: #f3f4f6; padding: 16px; text-align: center; font-size: 12px; color: #6b7280;">
-          <p style="margin: 0;">Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
-          <p style="margin: 4px 0 0 0;">MediQR Emergency Response System</p>
-          <p style="margin: 4px 0 0 0;">This is an automated message. Please respond promptly.</p>
-        </div>
-      </div>
-    `,
-    text: `EMERGENCY ALERT
-
-      ${user.name} has triggered a medical emergency alert and listed you as their primary contact.
-
-      Name: ${user.name}
-      Phone: ${user.phone || 'Not available'}
-
-      Location: ${latitude && longitude ? `https://maps.google.com/?q=${latitude},${longitude}` : 'Not available'}
-      Coordinates: ${latitude && longitude ? `${latitude}, ${longitude}` : 'Not available'}
-
-      Your Priority Level: ${bestContact.priority}
-      Your Location: ${bestContact.city || 'Unknown'}
-      Distance from User: ${bestContact.distance || 'Unknown'}
-      Selection Basis: ${latitude && longitude ? 'Proximity + Priority' : 'Priority Only'}
-
-      RECOMMENDED ACTIONS:
-      1. Call ${user.name} immediately.
-      2. If unreachable, proceed to the location above.
-      3. Dial 108 (Ambulance) or 112 (Emergency) if needed.
-      4. Notify family if necessary.
-      5. Stay with the user until help arrives.
-
-      Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-
-      MediQR Emergency Notification System
-      This is an automated message. Please take action immediately.`
-        });
-
-        emailsSent++;
-        console.log("✅ Email sent to best emergency contact:", bestContact.email);
-      }
-
-      if (emailsSent === 0) {
-        console.log("⚠️ No email addresses found for alerts");
-        return res.status(200).json({ 
-          message: "SOS alert processed but no email addresses available for notification", 
-          warning: "Consider adding email addresses to emergency contacts" 
-        });
-      }
-
-      return res.status(200).json({ 
-        message: `SOS email alerts sent successfully to ${emailsSent} recipient(s)`,
-        details: {
-          emailsSent,
-          totalAlerts: emailsSent
-        }
+            <div style="padding: 25px;">
+              <p style="margin: 0 0 15px 0; color: #111827; font-size: 14px;">
+                This is to inform you that the policyholder <strong>${user.name}</strong> has triggered a real-time emergency alert through the MediQR platform.
+              </p>
+              <table style="width: 100%; font-size: 13px;">
+                <tr><td style="padding: 6px 0; font-weight: bold;">Name:</td><td>${user.name}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Policy Number:</td><td>${insuranceInfo.policyNumber || 'Not available'}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Time of Alert:</td><td>${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</td></tr>
+              </table>
+              ${latitude && longitude ? `
+                <p style="margin-top: 15px; font-size: 13px;">
+                  <strong>Location:</strong> <a href="https://maps.google.com/?q=${latitude},${longitude}" style="color: #2563eb;">View Map</a>
+                </p>` : ''}
+              <p style="margin-top: 20px; font-size: 13px; color: #374151;">
+                Please prepare to initiate emergency response procedures or pre-authorization if required. This is an automated notification and may be followed up by the hospital or family representatives.
+              </p>
+            </div>
+            <div style="background: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; color: #6b7280;">
+              <p style="margin: 0;">Generated by MediQR Emergency Alert System</p>
+              <p style="margin: 5px 0 0 0;">For authorized insurance use only</p>
+            </div>
+          </div>
+        `,
+        text: `INSURANCE NOTIFICATION\n\nPolicyholder ${user.name} has triggered a real-time emergency alert.\n\nName: ${user.name}\nPolicy Number: ${insuranceInfo.policyNumber || 'Not available'}\nTime of Alert: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n${latitude && longitude ? `Location: https://maps.google.com/?q=${latitude},${longitude}` : ''}\n\nPlease initiate emergency claim handling or pre-authorization procedures as applicable.\n\n— MediQR Alert System`
       });
-
+      emailsSent++;
+    }
+    if (bestContact.email) {
+      await transporter.sendMail({
+        to: bestContact.email,
+        subject: `Emergency Alert – ${user.name} requires assistance`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #ccc; background-color: #ffffff;">
+            <div style="background-color: #003366; color: white; padding: 16px;">
+              <h2 style="margin: 0; font-size: 18px;">Emergency Notification</h2>
+            </div>
+            <div style="padding: 20px; font-size: 14px; color: #111827;">
+              <p style="margin-bottom: 15px;">
+                You are receiving this message because <strong>${user.name}</strong> has triggered a medical emergency alert and listed you as their primary emergency contact.
+              </p>
+              <h4 style="margin: 20px 0 5px 0; font-size: 15px;">User Information</h4>
+              <table style="width: 100%; font-size: 14px;">
+                <tr><td style="padding: 6px 0; font-weight: bold;">Name:</td><td>${user.name}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Phone:</td><td>${user.phone || 'Not available'}</td></tr>
+              </table>
+              ${latitude && longitude ? `
+                <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Last Known Location</h4>
+                <p style="margin-bottom: 8px;">
+                  <a href="https://maps.google.com/?q=${latitude},${longitude}" style="color: #1d4ed8;">Click to open in Google Maps</a>
+                </p>
+                <p style="font-size: 13px; color: #4b5563;">Coordinates: ${latitude}, ${longitude}</p>
+              ` : `
+                <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Location</h4>
+                <p style="color: #6b7280;">Location not available</p>
+              `}
+              <h4 style="margin: 20px 0 5px 0; font-size: 15px;">Contact Relevance</h4>
+              <table style="width: 100%; font-size: 14px;">
+                <tr><td style="padding: 6px 0; font-weight: bold;">Priority:</td><td>${bestContact.priority}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Your Location:</td><td>${bestContact.city || 'Unknown'}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Distance from user:</td><td>${bestContact.distance !== 'Unknown' ? `${bestContact.distance} km` : 'Unknown'}</td></tr>
+                <tr><td style="padding: 6px 0; font-weight: bold;">Selection Basis:</td><td>${latitude && longitude ? 'Proximity + Priority' : 'Priority Only'}</td></tr>
+              </table>
+              <h4 style="margin: 20px 0 5px 0; font-size: 15px;">What You Should Do</h4>
+              <ol style="padding-left: 18px; font-size: 14px; color: #1f2937;">
+                <li>Call ${user.name} immediately using their registered number.</li>
+                <li>If unreachable, proceed to the shared location if available.</li>
+                <li>Dial 108 (Ambulance) or 112 (Emergency) if urgent care is needed.</li>
+                <li>Notify other close family members if possible.</li>
+                <li>Stay with the user until medical assistance arrives.</li>
+              </ol>
+            </div>
+            <div style="background-color: #f3f4f6; padding: 16px; text-align: center; font-size: 12px; color: #6b7280;">
+              <p style="margin: 0;">Generated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+              <p style="margin: 4px 0 0 0;">MediQR Emergency Response System</p>
+              <p style="margin: 4px 0 0 0;">This is an automated message. Please respond promptly.</p>
+            </div>
+          </div>
+        `,
+        text: `EMERGENCY ALERT\n\n${user.name} has triggered a medical emergency alert and listed you as their primary contact.\n\nName: ${user.name}\nPhone: ${user.phone || 'Not available'}\n\nLocation: ${latitude && longitude ? `https://maps.google.com/?q=${latitude},${longitude}` : 'Not available'}\nCoordinates: ${latitude && longitude ? `${latitude}, ${longitude}` : 'Not available'}\n\nYour Priority Level: ${bestContact.priority}\nYour Location: ${bestContact.city || 'Unknown'}\nDistance from User: ${bestContact.distance || 'Unknown'}\nSelection Basis: ${latitude && longitude ? 'Proximity + Priority' : 'Priority Only'}\n\nRECOMMENDED ACTIONS:\n1. Call ${user.name} immediately.\n2. If unreachable, proceed to the location above.\n3. Dial 108 (Ambulance) or 112 (Emergency) if needed.\n4. Notify family if necessary.\n5. Stay with the user until help arrives.\n\nGenerated on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}\n\nMediQR Emergency Notification System\nThis is an automated message. Please take action immediately.`
+      });
+      emailsSent++;
+    }
+    if (emailsSent === 0) {
+      return res.status(200).json({ message: "SOS alert processed but no email addresses available for notification", warning: "Consider adding email addresses to emergency contacts" });
+    }
+    return res.status(200).json({ message: `SOS email alerts sent successfully to ${emailsSent} recipient(s)`, details: { emailsSent, totalAlerts: emailsSent } });
   } catch (error) {
-      console.error("❌ SOS Alert API Error:", error);
-      return res.status(500).json({ message: "Failed to send SOS alerts", error: error.message });
+    console.error("❌ SOS Alert API Error:", error);
+    // Log the full backend error response
+    console.log("SOS error response:", error.response?.data);
+    return res.status(500).json({ error: "Failed to send SOS alerts", details: error.message });
   }
 };
