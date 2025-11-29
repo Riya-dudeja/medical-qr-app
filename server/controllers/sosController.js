@@ -9,23 +9,29 @@ dotenv.config();
 // Function to get city name from coordinates using reverse geocoding
 const getCityFromCoordinates = async (lat, lon) => {
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`);
-    const data = await response.json();
-    
-    if (data && data.address) {
-      // Try to get city from various possible fields
-      const city = data.address.city || 
-                   data.address.town || 
-                   data.address.village || 
-                   data.address.municipality ||
-                   data.address.state_district ||
-                   data.address.county;
-      
-      console.log(`📍 Reverse geocoding: ${city || 'Unknown'}`);
-      return city ? city.toLowerCase().trim() : null;
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'MediQR/1.0 (your-email@example.com)' }
+    });
+    const text = await response.text();
+    try {
+      const data = JSON.parse(text);
+      if (data && data.address) {
+        // Try to get city from various possible fields
+        const city = data.address.city || 
+                     data.address.town || 
+                     data.address.village || 
+                     data.address.municipality ||
+                     data.address.state_district ||
+                     data.address.county;
+        console.log(`📍 Reverse geocoding: ${city || 'Unknown'}`);
+        return city ? city.toLowerCase().trim() : null;
+      }
+      return null;
+    } catch (err) {
+      console.error('❌ Reverse geocoding failed: Response was not valid JSON:', text);
+      return null;
     }
-    
-    return null;
   } catch (error) {
     console.error('❌ Reverse geocoding failed:', error.message);
     return null;
